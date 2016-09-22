@@ -1,0 +1,7 @@
+---
+applications:
+- name:    my-node-redis-helloworld
+  host:    my-node-redis-helloworld
+  memory:  128M
+  services:
+    - my-compose-for-redis-service
