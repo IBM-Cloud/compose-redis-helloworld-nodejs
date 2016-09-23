@@ -30,7 +30,7 @@ compose-redis-helloworld-nodejs is a sample Bluemix application which shows you 
   **Note :** The Compose for Redis service does not offer a free plan. For details of pricing, see the _Pricing Plans_ section of the [Compose for Redis service][compose_for_redis_url] in Bluemix.
 
   ```
-  $ cf create-service compose-redis-helloworld-nodejs Standard my-compose-for-redis-service
+  $ cf create-service compose-for-redis Standard my-compose-for-redis-service
   ```
 
 8. Push the app to Bluemix.
