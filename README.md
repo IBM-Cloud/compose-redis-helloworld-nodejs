@@ -33,7 +33,13 @@ compose-redis-helloworld-nodejs is a sample Bluemix application which shows you 
   $ cf create-service compose-for-redis Standard my-compose-for-redis-service
   ```
 
-8. Push the app to Bluemix.
+8. Bind the service to the application.
+
+  ```
+  $ cf bind-service compose-redis-helloworld-nodejs my-compose-for-redis-service
+  ```
+  
+9. Push the app to Bluemix.
 
   ```
   $ cf push
