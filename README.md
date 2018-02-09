@@ -34,13 +34,13 @@ compose-redis-helloworld-nodejs is a sample Bluemix application which shows you 
 
   - You will need to specify the service plan that your service will use, which can be _Standard_ or _Enterprise_. This readme file assumes that you will use the _Standard_ plan. To use the _Enterprise_ plan you will need to create an instance of the Compose Enterprise service first. Compose Enterprise is a service which provides a private isolated cluster for your Compose databases. For information on Compose Enterprise and how to provision your app into a Compose Enterprise cluster, see the [Compose Enterprise for Bluemix help](https://console.ng.bluemix.net/docs/services/ComposeEnterprise/index.html).
 
-  Create your service with SSL:
+  Create your service with TLS/SSL:
 
 ```
   $ cf create-service compose-for-redis Standard my-compose-for-redis-service -c '{ "ssl":"true" }'
   ```
 
-  or without SSL:
+  or without TLS/SSL:
   ```
   $ cf create-service compose-for-redis Standard my-compose-for-redis-service -c '{ "ssl":"false" }'
   ```
