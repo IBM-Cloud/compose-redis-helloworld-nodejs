@@ -18,6 +18,8 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
+const url = require("url");
+
 
 app.use(bodyParser.urlencoded({
   extended: false
@@ -52,7 +54,19 @@ var credentials = redis_services[0].credentials;
 /// This is the Redis connection. From the application environment, we got the
 // credentials and the credentials contain a URI for the database. Here, we
 // connect to that URI
-var client=redis.createClient(credentials.uri);
+let client = null;
+
+if (credentials.uri.startsWith("rediss://")) {
+  // If this is a rediss: connection, we have some other steps.
+  client = redis.createClient(credentials.uri, {
+    tls: { servername: url.parse(credentials.uri).hostname }
+  });
+  // This will, with node-redis 2.8, emit an error:
+  // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
+  // This is a bogus message and should be fixed in a later release of the package.
+} else {
+  client = redis.createClient(credentials.uri);
+}
 
 client.on("error", function (err) {
     console.log("Error " + err);
