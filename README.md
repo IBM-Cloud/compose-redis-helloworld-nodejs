@@ -34,10 +34,15 @@ compose-redis-helloworld-nodejs is a sample Bluemix application which shows you 
 
   - You will need to specify the service plan that your service will use, which can be _Standard_ or _Enterprise_. This readme file assumes that you will use the _Standard_ plan. To use the _Enterprise_ plan you will need to create an instance of the Compose Enterprise service first. Compose Enterprise is a service which provides a private isolated cluster for your Compose databases. For information on Compose Enterprise and how to provision your app into a Compose Enterprise cluster, see the [Compose Enterprise for Bluemix help](https://console.ng.bluemix.net/docs/services/ComposeEnterprise/index.html).
 
-  Create your service:
+  Create your service with SSL:
 
+```
+  $ cf create-service compose-for-redis Standard my-compose-for-redis-service -c '{ "ssl":"true" }'
   ```
-  $ cf create-service compose-for-redis Standard my-compose-for-redis-service
+
+  or without SSL:
+  ```
+  $ cf create-service compose-for-redis Standard my-compose-for-redis-service -c '{ "ssl":"false" }'
   ```
 
 8. Push the app to Bluemix. When you push the app it will automatically be bound to the service.
@@ -65,20 +70,6 @@ The app uses a PUT and a GET operation:
   - uses `client.hgetall()` method to retrieve the contents of the _words_ hash
   - returns the response of the database command to [main.js](public/javascript/main.js)
 
-
-## Privacy Notice
-The sample web application includes code to track deployments to Bluemix and other Cloud Foundry platforms. The following information is sent to a [Deployment Tracker](https://github.com/cloudant-labs/deployment-tracker) service on each deployment:
-
-* Application Name (application_name)
-* Space ID (space_id)
-* Application Version (application_version)
-* Application URIs (application_uris)
-
-This data is collected from the VCAP_APPLICATION environment variable in IBM Bluemix and other Cloud Foundry platforms. This data is used by IBM to track metrics around deployments of sample applications to IBM Bluemix. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
-
-### Disabling Deployment Tracking
-
-Deployment tracking can be disabled by removing `require("cf-deployment-tracker-client").track();` from the beginning of the `server.js` file.
 
 [compose_for_redis_url]: https://console.ng.bluemix.net/catalog/services/compose-for-redis/
 [bluemix_signup_url]: https://ibm.biz/compose-for-redis-signup
