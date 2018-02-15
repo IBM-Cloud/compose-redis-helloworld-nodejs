@@ -10,21 +10,20 @@ compose-redis-helloworld-nodejs is a sample Bluemix application which shows you 
 
 3. Connect to Bluemix in the command line tool and follow the prompts to log in.
 
-  ```
-  $ cf api https://api.ng.bluemix.net
-  $ cf login
-  ```
+```shell
+cf api https://api.ng.bluemix.net
+cf login
+```
 
 4. Clone the app to your local environment from your terminal using the following command:
 
-  ```
+  ```shell
   git clone https://github.com/IBM-Bluemix/compose-redis-helloworld-nodejs.git
   ```
 
 5. `cd` into this newly created directory
 
 6. Open the `manifest.yml` file.
-
   - Change the `host` value to something unique. The host you choose will determinate the subdomain of your application's URL:  `<host>.mybluemix.net`.
   - Change the `name` value. The value you choose will be the name of the app as it appears in your Bluemix dashboard.
 
