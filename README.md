@@ -43,7 +43,7 @@ compose-redis-helloworld-nodejs is a sample IBM Cloud application which shows yo
 
   - **Note :** The Compose for Redis service does not offer a free plan. For details of pricing, see the _Pricing Plans_ section of the [Compose for Redis service][compose_for_redis_url] in IBM Cloud.
 
-  - You will need to specify the service plan that your service will use, which can be _Standard_ or _Enterprise_. This readme file assumes that you will use the _Standard_ plan. To use the _Enterprise_ plan you will need to create an instance of the Compose Enterprise service first. Compose Enterprise is a service which provides a private isolated cluster for your Compose databases. For information on Compose Enterprise and how to provision your app into a Compose Enterprise cluster, see the [Compose Enterprise for IBM Cloud help](https://console.ng.bluemix.net/docs/services/ComposeEnterprise/index.html).
+  - You will need to specify the service plan that your service will use, which can be _Standard_ or _Enterprise_. This readme file assumes that you will use the _Standard_ plan. To use the _Enterprise_ plan you will need to create an instance of the Compose Enterprise service first. Compose Enterprise is a service which provides a private isolated cluster for your Compose databases. For information on Compose Enterprise and how to provision your app into a Compose Enterprise cluster, see the [Compose Enterprise for IBM Cloud help](https://console.bluemix.net/docs/services/ComposeEnterprise/index.html).
 
   To create your service:
 
@@ -78,6 +78,6 @@ The app uses a PUT and a GET operation:
   - uses `client.hgetall()` method to retrieve the contents of the _words_ hash
   - returns the response of the database command to [main.js](public/javascript/main.js)
 
-[compose_for_redis_url]: https://console.ng.bluemix.net/catalog/services/compose-for-redis/
+[compose_for_redis_url]: https://console.bluemix.net/catalog/services/compose-for-redis/
 [IBMCloud_signup_url]: https://ibm.biz/compose-for-redis-signup
-[cloud_foundry_url]: https://github.com/cloudfoundry/cli
+
