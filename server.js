@@ -71,41 +71,50 @@ let credentials = redis_services[0].credentials;
 
 let connectionStrings = [credentials.uri, credentials.uri_direct_1];
 
-let client = createClient(connectionStrings[0]);
+let client = createClient(connectionStrings);
 
 function createClient(connectionString){
   var client
-  if (connectionString.startsWith("rediss://")) {
+  if (connectionString[0].startsWith("rediss://")) {
       // If this is a rediss: connection, we have some other steps.
-      client = redis.createClient(connectionString, {
-          tls: { servername: new URL(connectionString).hostname }
+      client = redis.createClient(connectionString[0], {
+          tls: { servername: new URL(connectionString[0]).hostname }
       });
       // This will, with node-redis 2.8, emit an error:
       // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
       // This is a bogus message and should be fixed in a later release of the package.
   } else {
-      client = redis.createClient(connectionString);
+      client = redis.createClient(connectionString[0]);
   }
   return client
 }
 
-function switchClient() {
-    if (connectionStrings[1].includes(client.address)) {
-      client.quit();
-      client = createClient(connectionStrings[0]);
-    } else if (connectionStrings[0].includes(client.address)) {
-      client.quit();
-      client = createClient(connectionStrings[1]);
-    }
+// function switchClient() {
+//     if (connectionStrings[1].includes(client.address)) {
+//       client.quit();
+//       client = createClient(connectionStrings[0]);
+//     } else if (connectionStrings[0].includes(client.address)) {
+//       client.quit();
+//       client = createClient(connectionStrings[1]);
+//     }
 
+// }
+function rotateConnectionStrings() {
+    connectionStrings.push(connectionStrings[0]);
+    connectionStrings.shift();
 }
-
 
 client.on("error", function(err) {
     console.log("Error " + err);
+    console.log("Error " + err);
 
     if (err.code == 'ETIMEDOUT') {
-        switchClient();
+        client.quit();
+            console.log("bef err code    " + client.address);
+        rotateConnectionStrings();
+        client = createClient(connectionStrings);
+            console.log("aft err code    " + client.address);
+
     }
   });
 
