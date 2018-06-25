@@ -49,7 +49,7 @@ let cfenv = require('cfenv');
 let vcapLocal;
 try {
   vcapLocal = require('./vcap-local.json');
-  console.log("Loaded local VCAP", vcapLocal);
+  console.log("Loaded local VCAP");
 } catch (e) { 
     // console.log(e)
 }
@@ -69,29 +69,51 @@ assert(!util.isUndefined(redis_services), "Must be bound to compose-for-redis se
 // We now take the first bound Redis service and extract it's credentials object
 let credentials = redis_services[0].credentials;
 
-let connectionString = credentials.uri;
+let connectionStrings = [credentials.uri, credentials.uri_direct_1];
 
-let client = null;
+let client = createClient(connectionStrings[0]);
 
-if (connectionString.startsWith("rediss://")) {
-    // If this is a rediss: connection, we have some other steps.
-    client = redis.createClient(connectionString, {
-        tls: { servername: new URL(connectionString).hostname }
-    });
-    // This will, with node-redis 2.8, emit an error:
-    // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
-    // This is a bogus message and should be fixed in a later release of the package.
-} else {
-    client = redis.createClient(connectionString);
+function createClient(connectionString){
+  var client
+  if (connectionString.startsWith("rediss://")) {
+      // If this is a rediss: connection, we have some other steps.
+      client = redis.createClient(connectionString, {
+          tls: { servername: new URL(connectionString).hostname }
+      });
+      // This will, with node-redis 2.8, emit an error:
+      // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
+      // This is a bogus message and should be fixed in a later release of the package.
+  } else {
+      client = redis.createClient(connectionString);
+  }
+  return client
 }
+
+function switchClient() {
+    if (connectionStrings[1].includes(client.address)) {
+      client.quit();
+      client = createClient(connectionStrings[0]);
+    } else if (connectionStrings[0].includes(client.address)) {
+      client.quit();
+      client = createClient(connectionStrings[1]);
+    }
+
+}
+
 
 client.on("error", function(err) {
     console.log("Error " + err);
-});
+
+    if (err.code == 'ETIMEDOUT') {
+        switchClient();
+    }
+  });
+
 
 // Add a word to the database
 function addWord(word, definition) {
     return new Promise(function(resolve, reject) {
+
         // use the connection to add the word and definition entered by the user
         client.hset("words", word, definition, function(
             error,
