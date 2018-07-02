@@ -37,7 +37,7 @@ const util = require('util')
 const assert = require('assert');
 
 // We want to extract the port to publish our app on
-let port = process.env.PORT || 8080;
+let port = process.env.PORT || 3000;
 
 // Then we'll pull in the database client library
 const redis = require("redis");
@@ -47,6 +47,7 @@ let cfenv = require('cfenv');
 
 // load local VCAP configuration  and service credentials
 let vcapLocal;
+
 try {
   vcapLocal = require('./vcap-local.json');
   console.log("Loaded local VCAP");
@@ -71,53 +72,40 @@ let credentials = redis_services[0].credentials;
 
 let connectionStrings = [credentials.uri, credentials.uri_direct_1];
 
-let client = createClient(connectionStrings);
+var client;
+createClient();
 
-function createClient(connectionString){
-  var client
-  if (connectionString[0].startsWith("rediss://")) {
-      // If this is a rediss: connection, we have some other steps.
-      client = redis.createClient(connectionString[0], {
-          tls: { servername: new URL(connectionString[0]).hostname }
-      });
-      // This will, with node-redis 2.8, emit an error:
-      // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
-      // This is a bogus message and should be fixed in a later release of the package.
-  } else {
-      client = redis.createClient(connectionString[0]);
-  }
-  return client
+function createClient(){
+    if (connectionStrings[0].startsWith("rediss://")) {
+        // If this is a rediss: connection, we have some other steps.
+        client = redis.createClient(connectionStrings[0], {
+            tls: { servername: new URL(connectionStrings[0]).hostname }
+        });
+
+        // This will, with node-redis 2.8, emit an error:
+        // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
+        // This is a bogus message and should be fixed in a later release of the package.
+    } else {
+        client = redis.createClient(connectionString[0]);
+    }
+
+    client.on("error", function(err) {
+      console.log("Error " + err);
+
+      //if there is a connection error switch connection strings
+      if (err.code === 'ENETUNREACH' || err.code === 'ETIMEDOUT') {
+        client.quit();
+        rotateConnectionStrings();
+        createClient();
+      }
+    });
 }
 
-// function switchClient() {
-//     if (connectionStrings[1].includes(client.address)) {
-//       client.quit();
-//       client = createClient(connectionStrings[0]);
-//     } else if (connectionStrings[0].includes(client.address)) {
-//       client.quit();
-//       client = createClient(connectionStrings[1]);
-//     }
-
-// }
+// rotates the values in the connectionStrings array
 function rotateConnectionStrings() {
     connectionStrings.push(connectionStrings[0]);
     connectionStrings.shift();
 }
-
-client.on("error", function(err) {
-    console.log("Error " + err);
-    console.log("Error " + err);
-
-    if (err.code == 'ETIMEDOUT') {
-        client.quit();
-            console.log("bef err code    " + client.address);
-        rotateConnectionStrings();
-        client = createClient(connectionStrings);
-            console.log("aft err code    " + client.address);
-
-    }
-  });
-
 
 // Add a word to the database
 function addWord(word, definition) {
@@ -139,6 +127,7 @@ function addWord(word, definition) {
 
 // Get words from the database
 function getWords() {
+
     return new Promise(function(resolve, reject) {
         // use the connection to return us all the documents in the words hash.
         client.hgetall("words", function(err, resp) {
@@ -170,6 +159,7 @@ app.put("/words", function(request, response) {
 // Read from the hash when the page is loaded or after a word is successfully added
 // Use the getWords function to get a list of words and definitions from the hash
 app.get("/words", function(request, response) {
+    console.log("inside get    " + client.address);
     getWords()
         .then(function(words) {
             response.send(words);
