@@ -9,9 +9,9 @@
   "author": "IBM Corp.",
   "license": "Apache-2.0",
   "dependencies": {
-    "body-parser": "^1.15.2",
-    "cfenv": "^1.0.3",
-    "express": "^4.14.0",
+    "body-parser": "^1.18.3",
+    "cfenv": "^1.1.0",
+    "express": "^4.16.3",
     "redis": "^2.6.2"
   },
   "engines": {

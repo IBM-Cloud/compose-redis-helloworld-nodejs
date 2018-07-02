@@ -1,0 +1,39 @@
+{
+    "services": {
+        "compose-for-redis": [
+            {
+                "credentials": {
+                    "db_type": "redis",
+                    "maps": [],
+                    "instance_administration_api": {
+                        "instance_id": "96968828-b7a2-4ce3-b985-2afba4b48922",
+                        "root": "https://composebroker-dashboard-public.us-east.mybluemix.net/api",
+                        "deployment_id": "5b22a945bd3159001a628d08"
+                    },
+                    "name": "bmix-wdc-yp-96968828-b7a2-4ce3-b985-2afba4b48922",
+                    "uri_direct_1": "rediss://admin:RRINZBMNJVCJNBWH@portal232-0.bmix-wdc-yp-96968828-b7a2-4ce3-b985-2afba4b48922.696278393.composedb.com:15642",
+                    "deployment_id": "5b22a945bd3159001a628d08",
+                    "uri": "rediss://admin:RRINZBMNJVCJNBWH@portal202-2.bmix-wdc-yp-96968828-b7a2-4ce3-b985-2afba4b48922.696278393.composedb.com:15642",
+                    "misc": {
+                        "direct_readonly": [],
+                        "cli_readonly": [],
+                        "ssh_cli": []
+                    }
+                },
+                "syslog_drain_url": null,
+                "volume_mounts": [],
+                "label": "compose-for-redis",
+                "provider": null,
+                "plan": "Standard",
+                "name": "my-compose-for-redis-service2",
+                "tags": [
+                    "big_data",
+                    "data_management",
+                    "ibm_created",
+                    "ibm_dedicated_public",
+                    "eu_access"
+                ]
+            }
+        ]
+    }
+}
