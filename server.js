@@ -47,7 +47,6 @@ let cfenv = require('cfenv');
 
 // load local VCAP configuration  and service credentials
 let vcapLocal;
-
 try {
   vcapLocal = require('./vcap-local.json');
   console.log("Loaded local VCAP");
@@ -70,9 +69,12 @@ assert(!util.isUndefined(redis_services), "Must be bound to compose-for-redis se
 // We now take the first bound Redis service and extract it's credentials object
 let credentials = redis_services[0].credentials;
 
+// add all the connection strings to an array
 let connectionStrings = [credentials.uri, credentials.uri_direct_1];
 
 var client;
+
+// initialize client with the first index/connectionString
 createClient();
 
 function createClient(){
@@ -91,9 +93,8 @@ function createClient(){
 
     client.on("error", function(err) {
       console.log("Error " + err);
-
       //if there is a connection error switch connection strings
-      if (err.code === 'ENETUNREACH' || err.code === 'ETIMEDOUT') {
+      if (err.code === 'ETIMEDOUT') {
         client.quit();
         rotateConnectionStrings();
         createClient();
@@ -101,7 +102,7 @@ function createClient(){
     });
 }
 
-// rotates the values in the connectionStrings array
+// rotates the values in the connectionStrings array to the left
 function rotateConnectionStrings() {
     connectionStrings.push(connectionStrings[0]);
     connectionStrings.shift();
@@ -110,7 +111,6 @@ function rotateConnectionStrings() {
 // Add a word to the database
 function addWord(word, definition) {
     return new Promise(function(resolve, reject) {
-
         // use the connection to add the word and definition entered by the user
         client.hset("words", word, definition, function(
             error,
@@ -127,7 +127,6 @@ function addWord(word, definition) {
 
 // Get words from the database
 function getWords() {
-
     return new Promise(function(resolve, reject) {
         // use the connection to return us all the documents in the words hash.
         client.hgetall("words", function(err, resp) {
@@ -159,7 +158,6 @@ app.put("/words", function(request, response) {
 // Read from the hash when the page is loaded or after a word is successfully added
 // Use the getWords function to get a list of words and definitions from the hash
 app.get("/words", function(request, response) {
-    console.log("inside get    " + client.address);
     getWords()
         .then(function(words) {
             response.send(words);
