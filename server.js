@@ -67,42 +67,89 @@ let redis_services = services["compose-for-redis"];
 assert(!util.isUndefined(redis_services), "Must be bound to compose-for-redis services");
 
 // We now take the first bound Redis service and extract it's credentials object
-let credentials = redis_services[0].credentials;
+var credentials = redis_services[0].credentials;
 
-let connectionString = credentials.uri;
+// adds the first connection string to an array
+let connectionStrings = [credentials.uri];
 
-let client = null;
-
-if (connectionString.startsWith("rediss://")) {
-    // If this is a rediss: connection, we have some other steps.
-    client = redis.createClient(connectionString, {
-        tls: { servername: new URL(connectionString).hostname }
-    });
-    // This will, with node-redis 2.8, emit an error:
-    // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
-    // This is a bogus message and should be fixed in a later release of the package.
-} else {
-    client = redis.createClient(connectionString);
+// adds all other connection strings
+for(var key in credentials) {
+    if (key.startsWith('uri_direct_')) {
+        connectionStrings.push(credentials[key]);
+    }
 }
 
-client.on("error", function(err) {
-    console.log("Error " + err);
-});
+var client;
+let reconnectionCounter = 0;
+
+// set the frequency at which a failed connection retries at 2 seconds
+var retryFrequency = 2000;
+
+// initialize client with the first index/connectionString
+createClient(connectionStrings[0]);
+
+function createClient(connectionString){
+    if (connectionString.startsWith("rediss://")) {
+        // If this is a rediss: connection, we have some other steps.
+        client = redis.createClient(connectionString, {
+            tls: { servername: new URL(connectionString).hostname }
+        });
+        // This will, with node-redis 2.8, emit an error:
+        // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
+        // This is a bogus message and should be fixed in a later release of the package.
+    } else {
+        client = redis.createClient(connectionString);
+    }
+    errorHandler();
+}
+
+// checks to see if client is emitting an error.
+function errorHandler() {
+    client.on("error", function(err) {
+        // Exist app if there is not a successful connection after 5 retries.
+        if (reconnectionCounter > 5) {
+            console.log('Maximum number of reconnection attempts reached. exiting...')
+            process.exit(1)
+        }
+        console.log("Error " + err);
+        if (err.code === 'ETIMEDOUT') {
+            // retry connection after a certain amount of time.
+            setTimeout(nextClient, retryFrequency);
+        }
+    });
+}
+
+// connects to the next connection string
+function nextClient() {
+    client.quit();
+    rotateConnectionStrings();
+    createClient(connectionStrings[0]);
+    retryFrequency *= 5;
+    reconnectionCounter++;
+}
+
+// rotates the values in the connectionStrings array to the left
+function rotateConnectionStrings() {
+    connectionStrings.push(connectionStrings[0]);
+    connectionStrings.shift();
+}
 
 // Add a word to the database
 function addWord(word, definition) {
     return new Promise(function(resolve, reject) {
         // use the connection to add the word and definition entered by the user
-        client.hset("words", word, definition, function(
-            error,
-            result
-        ) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve("success");
-            }
-        });
+            client.hset("words", word, definition, function(
+                error,
+                result
+            ) {
+                if (error) {
+                    reject(error);
+                } else {
+                    reconnectionCounter = 0;
+                    retryFrequency = 2000;
+                    resolve("success");
+                }
+            });
     });
 }
 
@@ -132,6 +179,11 @@ app.put("/words", function(request, response) {
         })
         .catch(function(err) {
             console.log(err);
+            // if the current connextion is down or retring to connect, 
+            // pass the arguments back in after a connection is established
+            if (err.code === "NR_CLOSED") {
+                return addWord(request.body.word, request.body.definition)
+            }
             response.status(500).send(err);
         });
 });
@@ -145,6 +197,9 @@ app.get("/words", function(request, response) {
         })
         .catch(function(err) {
             console.log(err);
+            if (err.code === "NR_CLOSED") {
+              return getWords()
+            }
             response.status(500).send(err);
         });
 });
