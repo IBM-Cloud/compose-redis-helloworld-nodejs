@@ -69,7 +69,7 @@ assert(!util.isUndefined(redis_services), "Must be bound to compose-for-redis se
 // We now take the first bound Redis service and extract it's credentials object
 var credentials = redis_services[0].credentials;
 
-// add the first connection strings to an array
+// adds the first connection string to an array
 let connectionStrings = [credentials.uri];
 
 // adds all other connection strings
@@ -81,6 +81,8 @@ for(var key in credentials) {
 
 var client;
 let reconnectionCounter = 0;
+
+// set the frequency at which a failed connection retries at 2 seconds
 var retryFrequency = 2000;
 
 // initialize client with the first index/connectionString
@@ -145,7 +147,7 @@ function addWord(word, definition) {
                 } else {
                     reconnectionCounter = 0;
                     retryFrequency = 2000;
-                    resolve("success\n");
+                    resolve("success");
                 }
             });
     });
@@ -171,7 +173,6 @@ app.use(express.static(__dirname + "/public"));
 // The user has clicked submit to add a word and definition to the hash
 // Send the data to the addWord function and send a response if successful
 app.put("/words", function(request, response) {
-    console.log('put');
     addWord(request.body.word, request.body.definition)
         .then(function(resp) {
             response.send(resp);
@@ -190,7 +191,6 @@ app.put("/words", function(request, response) {
 // Read from the hash when the page is loaded or after a word is successfully added
 // Use the getWords function to get a list of words and definitions from the hash
 app.get("/words", function(request, response) {
-    console.log('get')
     getWords()
         .then(function(words) {
             response.send(words);
