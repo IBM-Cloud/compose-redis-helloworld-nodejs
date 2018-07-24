@@ -100,6 +100,8 @@ function addWord(word, definition) {
             if (error) {
                 reject(error);
             } else {
+                reconnectionCounter = 0;
+                retryFrequency = 2000;
                 resolve("success");
             }
         });
