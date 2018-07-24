@@ -147,8 +147,8 @@ function addWord(word, definition) {
                 if (error) {
                     reject(error);
                 } else {
-                    retryFrequency = 2000;
                     reconnectionCounter = 0;
+                    retryFrequency = 2000;
                     resolve("success");
                 }
             });
