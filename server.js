@@ -69,25 +69,77 @@ assert(!util.isUndefined(redis_services), "Must be bound to compose-for-redis se
 // We now take the first bound Redis service and extract it's credentials object
 let credentials = redis_services[0].credentials;
 
-let connectionString = credentials.uri;
+let connectionStrings = [credentials.uri];
 
-let client = null;
-
-if (connectionString.startsWith("rediss://")) {
-    // If this is a rediss: connection, we have some other steps.
-    client = redis.createClient(connectionString, {
-        tls: { servername: new URL(connectionString).hostname }
-    });
-    // This will, with node-redis 2.8, emit an error:
-    // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
-    // This is a bogus message and should be fixed in a later release of the package.
-} else {
-    client = redis.createClient(connectionString);
+// adds all other connection strings
+for(var key in credentials) {
+    if (key.startsWith('uri_direct_')) {
+        connectionStrings.push(credentials[key]);
+    }
 }
 
-client.on("error", function(err) {
-    console.log("Error " + err);
-});
+var client;
+
+// subsequent failed reconnection attempts
+var reconnectionCounter;
+// the starting frequency at which a failed connection retries (milliseconds)
+var retryFrequency;
+
+setCounters();
+
+// initialize client with the first index/connectionString
+createClient(connectionStrings[0]);
+
+function createClient(connectionString){
+    if (connectionString.startsWith("rediss://")) {
+        // If this is a rediss: connection, we have some other steps.
+        client = redis.createClient(connectionString, {
+            tls: { servername: new URL(connectionString).hostname }
+        });
+        // This will, with node-redis 2.8, emit an error:
+        // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
+        // This is a bogus message and should be fixed in a later release of the package.
+    } else {
+        client = redis.createClient(connectionString);
+    }
+    errorHandler();
+}
+
+// checks to see if client is emitting an error.
+function errorHandler() {
+    client.on("error", function(err) {
+        console.log("Error " + err);
+        if (err.code === 'ETIMEDOUT') {
+            console.log(reconnectionCounter + ' subsequent failed reconnection attempt(s)')
+            // retry connection after a certain amount of time.
+            setTimeout(nextClient, retryFrequency);
+        }
+    });
+}
+
+// reset reconnection counters
+function setCounters() {
+    reconnectionCounter = 0;
+    retryFrequency = 2000;
+}
+
+// closes current connection and connects to the next connection string
+function nextClient() {
+    client.quit();
+    rotateConnectionStrings();
+    createClient(connectionStrings[0]);
+    reconnectionCounter++;
+    // stop increasing frequency after 8.5 minutes
+    if (retryFrequency < 512000 ) {
+        retryFrequency *= 2;
+    }
+}
+
+// rotates the values in the connectionStrings array to the left
+function rotateConnectionStrings() {
+    connectionStrings.push(connectionStrings[0]);
+    connectionStrings.shift();
+}
 
 // Add a word to the database
 function addWord(word, definition) {
@@ -100,6 +152,7 @@ function addWord(word, definition) {
             if (error) {
                 reject(error);
             } else {
+                setCounters();
                 resolve("success");
             }
         });
@@ -132,6 +185,11 @@ app.put("/words", function(request, response) {
         })
         .catch(function(err) {
             console.log(err);
+            // if the current connection is down or in the process of reconnection, 
+            // pass the arguments back in after a connection is established
+            if (err.code === "NR_CLOSED") {
+                return addWord(request.body.word, request.body.definition)
+            }
             response.status(500).send(err);
         });
 });
@@ -145,6 +203,9 @@ app.get("/words", function(request, response) {
         })
         .catch(function(err) {
             console.log(err);
+            if (err.code === "NR_CLOSED") {
+              return getWords()
+            }
             response.status(500).send(err);
         });
 });
