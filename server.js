@@ -80,17 +80,11 @@ for(var key in credentials) {
 }
 
 var client;
-<<<<<<< HEAD
 
 // subsequent failed reconnection attempts
 var reconnectionCounter = 0;
 
 // the starting frequency at which a failed connection retries (milliseconds)
-=======
-let reconnectionCounter = 0;
-
-// set the frequency at which a failed connection retries at 2 seconds
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
 var retryFrequency = 2000;
 
 // initialize client with the first index/connectionString
@@ -102,10 +96,7 @@ function createClient(connectionString){
         client = redis.createClient(connectionString, {
             tls: { servername: new URL(connectionString).hostname }
         });
-<<<<<<< HEAD
         //console.log(client.address);
-=======
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
         // This will, with node-redis 2.8, emit an error:
         // "node_redis: WARNING: You passed "rediss" as protocol instead of the "redis" protocol!"
         // This is a bogus message and should be fixed in a later release of the package.
@@ -118,44 +109,25 @@ function createClient(connectionString){
 // checks to see if client is emitting an error.
 function errorHandler() {
     client.on("error", function(err) {
-<<<<<<< HEAD
         console.log("Error " + err);
         if (err.code === 'ETIMEDOUT') {
             console.log(reconnectionCounter + ' subsequent failed reconnection attempt(s)')
-=======
-        // Exist app if there is not a successful connection after 5 retries.
-        if (reconnectionCounter > 5) {
-            console.log('Maximum number of reconnection attempts reached. exiting...')
-            process.exit(1)
-        }
-        console.log("Error " + err);
-        if (err.code === 'ETIMEDOUT') {
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
             // retry connection after a certain amount of time.
             setTimeout(nextClient, retryFrequency);
         }
     });
 }
 
-<<<<<<< HEAD
 // closes current connection and connects to the next connection string
-=======
-// connects to the next connection string
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
 function nextClient() {
     client.quit();
     rotateConnectionStrings();
     createClient(connectionStrings[0]);
-<<<<<<< HEAD
     reconnectionCounter++;
     // stop increasing frequency after 8.5 minutes
     if (retryFrequency < 512000 ) {
         retryFrequency *= 2;
     }
-=======
-    retryFrequency *= 5;
-    reconnectionCounter++;
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
 }
 
 // rotates the values in the connectionStrings array to the left
@@ -175,13 +147,8 @@ function addWord(word, definition) {
                 if (error) {
                     reject(error);
                 } else {
-<<<<<<< HEAD
                     retryFrequency = 2000;
                     reconnectionCounter = 0;
-=======
-                    reconnectionCounter = 0;
-                    retryFrequency = 2000;
->>>>>>> 8bd11eac5a9ea6b2331e177ae25a71d0cd6273e9
                     resolve("success");
                 }
             });
