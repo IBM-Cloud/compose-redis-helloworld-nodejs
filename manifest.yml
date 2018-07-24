@@ -4,4 +4,4 @@ applications:
   host:    my-node-redis-helloworld
   memory:  128M
   services:
-    - my-compose-for-redis-service
+- my-compose-for-redis-service
