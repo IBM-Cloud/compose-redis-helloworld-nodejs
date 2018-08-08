@@ -85,7 +85,7 @@ var reconnectionCounter;
 // the starting frequency at which a failed connection retries (milliseconds)
 var retryFrequency;
 
-setCounters();
+resetConnectionRetryCounters();
 
 // initialize client with the first index/connectionString
 createClient(connectionStrings[0]);
@@ -111,34 +111,34 @@ function errorHandler() {
         console.log("Error " + err);
         if (err.code === 'ETIMEDOUT') {
             console.log(reconnectionCounter + ' subsequent failed reconnection attempt(s)')
-            // retry connection after a certain amount of time.
+            // retry connection after a 'retryFrequency' amount of time.
             setTimeout(nextClient, retryFrequency);
         }
     });
 }
 
 // reset reconnection counters
-function setCounters() {
+function resetConnectionRetryCounters() {
     reconnectionCounter = 0;
     retryFrequency = 2000;
 }
 
 // closes current connection and connects to the next connection string
 function nextClient() {
+    // close current connection
     client.quit();
-    rotateConnectionStrings();
+    // add the value of the first index to the end of the array
+    connectionStrings.push(connectionStrings[0]);
+    // remove the first index so that the next value is in the first index
+    connectionStrings.shift();
+    // pass in the value of the connection string in the first index to create
+    // a connection
     createClient(connectionStrings[0]);
     reconnectionCounter++;
     // stop increasing frequency after 8.5 minutes
     if (retryFrequency < 512000 ) {
         retryFrequency *= 2;
     }
-}
-
-// rotates the values in the connectionStrings array to the left
-function rotateConnectionStrings() {
-    connectionStrings.push(connectionStrings[0]);
-    connectionStrings.shift();
 }
 
 // Add a word to the database
@@ -152,7 +152,8 @@ function addWord(word, definition) {
             if (error) {
                 reject(error);
             } else {
-                setCounters();
+                // reset the connection counters
+                resetConnectionRetryCounters();
                 resolve("success");
             }
         });
