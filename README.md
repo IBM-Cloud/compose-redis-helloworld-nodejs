@@ -18,8 +18,13 @@ compose-redis-helloworld-nodejs is a sample IBM Cloud application which shows yo
 
   **Note:** If you have a federated user ID, use the `bx login --sso` command to log in with your single sign on ID.
 
-4. Make sure you are targeting the correct IBM Cloud org and space.
+4. Make sure you are targeting the correct IBM Cloud org and space. If you have yet to creat an org or space use:
+  ```
+  bx account space-create [name of your space]
+  bx account org-create [name of your org]
+  ```
 
+  If you already have your IBM Cloud org and space, target them using:
   ```
   bx target --cf
   ```
